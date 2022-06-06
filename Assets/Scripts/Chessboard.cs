@@ -8,6 +8,11 @@ public class Chessboard : MonoBehaviour
     [SerializeField] private float yOffset = 0.2f;
     [SerializeField] private Vector3 boardCenter = new Vector3();
 
+
+    [Header("Prefabs & Materials")]
+    [SerializeField] private GameObject[] prefabs;
+    [SerializeField] private Material[] teamMaterials;
+
     //LOGIC
     private const int TILE_COUNT_X = 8;
     private const int TILE_COUNT_Y = 8;
