@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Chessboard : MonoBehaviour
@@ -7,6 +9,9 @@ public class Chessboard : MonoBehaviour
     [SerializeField] private float tileSize = 0.2f;
     [SerializeField] private float yOffset = 0.2f;
     [SerializeField] private Vector3 boardCenter = new Vector3();
+    [SerializeField] private float deathSize = 0.3f;
+    [SerializeField] private float deathSpacing = 0.3f;
+    [SerializeField] private float dragOffset = 0.3f;
 
 
     [Header("Prefabs & Materials")]
@@ -14,6 +19,10 @@ public class Chessboard : MonoBehaviour
     [SerializeField] private Material[] teamMaterials;
 
     //LOGIC
+    private ChessPiece[,] chessPieces;
+    private ChessPiece currentlyDragging;
+    private List<ChessPiece> deadWhites = new List<ChessPiece>();
+    private List<ChessPiece> deadBlacks = new List<ChessPiece>();
     private const int TILE_COUNT_X = 8;
     private const int TILE_COUNT_Y = 8;
     private GameObject[,] tiles;
@@ -26,7 +35,9 @@ public class Chessboard : MonoBehaviour
     {
         tileSize = 0.721f;
         yOffset = 0.01f;
-        generateAllTiles(tileSize, TILE_COUNT_X, TILE_COUNT_Y); 
+        generateAllTiles(tileSize, TILE_COUNT_X, TILE_COUNT_Y);
+        spawnAllPieces();
+        positionAllPieces();
     }
     void Update()
     {
@@ -72,6 +83,37 @@ public class Chessboard : MonoBehaviour
                 //take the tile that was hit and change it's layer
                 tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
             }
+
+            //If we press down on the mouse
+            if (Input.GetMouseButtonDown(0))
+            {
+                //And of there is something there aside from an empty tile
+                if (chessPieces[hitPosition.x, hitPosition.y] != null)
+                {
+                    // Is it our turn?
+                    if (true)
+                    {
+                        currentlyDragging = chessPieces[hitPosition.x, hitPosition.y];
+                    }
+                }
+            }
+            //If we release the mousebutton
+            if (currentlyDragging != null && Input.GetMouseButtonUp(0))
+            {   
+                //Where the piece was dragged from
+                Vector2Int previousPosition = new Vector2Int(currentlyDragging.currentX, currentlyDragging.currentY);
+                bool validmove = moveTo(currentlyDragging, hitPosition.x, hitPosition.y);
+                //If the attempted move was not valid
+                if (!validmove)
+                {
+                    currentlyDragging.setPosition( getTileCenter(previousPosition.x, previousPosition.y));
+                    currentlyDragging = null;
+                }
+                else
+                {
+                    currentlyDragging = null;
+                }
+            }
         }
         
         //If the ray gets nothing and therefore we are outside the board:
@@ -84,8 +126,27 @@ public class Chessboard : MonoBehaviour
                 tiles[currentHover.x, currentHover.y].layer = LayerMask.NameToLayer("Tile");
                 currentHover = -Vector2Int.one;
             }
+
+            if (currentlyDragging && Input.GetMouseButtonUp(0))
+            {
+                currentlyDragging = null;
+                currentlyDragging.setPosition(getTileCenter(currentlyDragging.currentX, currentlyDragging.currentY));
+
+            }
+        }
+
+        // If we're currently dragging a piece
+        if (currentlyDragging)
+        {
+            Plane horizontalPlane = new Plane(Vector3.up, Vector3.up * yOffset);
+            float distance = 0.0f;
+            if (horizontalPlane.Raycast(ray, out distance))
+            {
+                currentlyDragging.setPosition( ray.GetPoint(distance) + Vector3.up * dragOffset);
+            }
         }
     }
+
 
     //Generate the board
     private void generateAllTiles(float tileSize, int tileCountX, int tileCountY)
@@ -102,7 +163,6 @@ public class Chessboard : MonoBehaviour
             }
         }
     }
-
     private GameObject generateSingleTile(float tileSize, int x, int y)
     {
         GameObject tileObject = new GameObject(string.Format("X:{0}, Y:{1}", x, y));
@@ -134,6 +194,79 @@ public class Chessboard : MonoBehaviour
         return tileObject;
     }
 
+
+    //Spawn pieces
+    private void spawnAllPieces()
+    {
+        //new is full of nullptr's if declared like this:
+        chessPieces = new ChessPiece[TILE_COUNT_X, TILE_COUNT_Y];
+        int whiteTeam = 0, blackTeam = 1;
+
+        //White team
+        chessPieces[0, 0] = spawnSinglePiece(ChessPieceType.Rook, whiteTeam);
+        chessPieces[1, 0] = spawnSinglePiece(ChessPieceType.Knight, whiteTeam);
+        chessPieces[2, 0] = spawnSinglePiece(ChessPieceType.Bishop, whiteTeam);
+        chessPieces[3, 0] = spawnSinglePiece(ChessPieceType.Queen, whiteTeam);
+        chessPieces[4, 0] = spawnSinglePiece(ChessPieceType.King, whiteTeam);
+        chessPieces[5, 0] = spawnSinglePiece(ChessPieceType.Bishop, whiteTeam);
+        chessPieces[6, 0] = spawnSinglePiece(ChessPieceType.Knight, whiteTeam);
+        chessPieces[7, 0] = spawnSinglePiece(ChessPieceType.Rook, whiteTeam);
+        for (int i = 0; i < TILE_COUNT_X; i++)
+        {
+            chessPieces[i, 1] = spawnSinglePiece(ChessPieceType.Pawn, whiteTeam);
+        }
+
+        //White team
+        chessPieces[0, 7] = spawnSinglePiece(ChessPieceType.Rook, blackTeam);
+        chessPieces[1, 7] = spawnSinglePiece(ChessPieceType.Knight, blackTeam);
+        chessPieces[2, 7] = spawnSinglePiece(ChessPieceType.Bishop, blackTeam);
+        chessPieces[3, 7] = spawnSinglePiece(ChessPieceType.Queen, blackTeam);
+        chessPieces[4, 7] = spawnSinglePiece(ChessPieceType.King, blackTeam);
+        chessPieces[5, 7] = spawnSinglePiece(ChessPieceType.Bishop, blackTeam);
+        chessPieces[6, 7] = spawnSinglePiece(ChessPieceType.Knight, blackTeam);
+        chessPieces[7, 7] = spawnSinglePiece(ChessPieceType.Rook, blackTeam);
+        for (int i = 0; i < TILE_COUNT_X; i++)
+        {
+            chessPieces[i, 6] = spawnSinglePiece(ChessPieceType.Pawn, blackTeam);
+        }
+    }
+    private ChessPiece spawnSinglePiece(ChessPieceType type, int team)
+    {
+        ChessPiece cp = Instantiate(prefabs[((int)type - 1) + team*6], transform).GetComponent<ChessPiece>();
+        cp.type = type;
+        cp.team = team;
+        //cp.GetComponent<MeshRenderer>().material = teamMaterials[team];
+        return cp;
+    }
+
+
+    //Positioning
+    private void positionAllPieces()
+    {
+        for (int x = 0; x < TILE_COUNT_X; x++)
+        {
+            for (int y = 0; y < TILE_COUNT_Y; y++)
+            {
+                if (chessPieces[x, y] != null)
+                {
+                    positionSinglePiece(x, y, true);
+                }
+            }
+        }
+    }
+
+    // force value makes the movement instant if true
+    private void positionSinglePiece(int x, int y, bool snapToTile = false)
+    {
+        chessPieces[x, y].currentX = x;
+        chessPieces[x, y].currentY = y;
+        chessPieces[x, y].setPosition(getTileCenter(x,y),snapToTile);
+    }
+    private Vector3 getTileCenter(int x, int y)
+    {
+        return new Vector3(x * tileSize, yOffset, y * tileSize) - bounds + new Vector3(tileSize/2, 0, tileSize/2);
+    }
+
     //Operations
     private Vector2Int LookupTileIndex(GameObject hitInfo)
     {
@@ -149,5 +282,44 @@ public class Chessboard : MonoBehaviour
         }
         return -Vector2Int.one; //This should not happen ever.
     }
+    private bool moveTo(ChessPiece cp, int x, int y)
+    {
+        Vector2Int previousPosition = new Vector2Int(cp.currentX, cp.currentY);
 
+        //Is there another piece on the targeted tile
+        if (chessPieces[x, y] != null)
+        {
+            ChessPiece otherPiece = chessPieces[x, y];
+            if (cp.team == otherPiece.team)
+            {
+                return false;
+            }
+            //If its the enemy team's tile
+            if (otherPiece.team == 0)
+            {
+                deadWhites.Add(otherPiece);
+                otherPiece.setScale(Vector3.one * deathSize);
+                otherPiece.setPosition(
+                    new Vector3(8 * tileSize, yOffset, -1 * tileSize)
+                    - bounds + new Vector3(tileSize / 2, 0, tileSize / 2)
+                    + (Vector3.forward * deathSpacing) * deadWhites.Count);
+            }
+            else
+            {
+                deadBlacks.Add(otherPiece);
+                otherPiece.setScale(Vector3.one * deathSize);
+                otherPiece.setPosition(
+                    new Vector3(-1 * tileSize, yOffset, 8 * tileSize)
+                    - bounds + new Vector3(tileSize / 2, 0, tileSize / 2)
+                    + (Vector3.back * deathSpacing) * deadBlacks.Count);
+            }
+        }
+
+        chessPieces[x, y] = cp;
+        chessPieces[previousPosition.x, previousPosition.y] = null;
+
+        positionSinglePiece(x, y);
+
+        return true;
+    }
 }

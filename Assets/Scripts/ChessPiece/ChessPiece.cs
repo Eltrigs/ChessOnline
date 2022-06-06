@@ -22,5 +22,29 @@ public class ChessPiece : MonoBehaviour
 
     //For smooth movements
     private Vector3 desiredPosition;
-    private Vector3 desiredScale;
+    private Vector3 desiredScale = Vector3.one;
+
+    private void Update()
+    {
+        transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * 10);
+        transform.localScale = Vector3.Lerp(transform.localScale, desiredScale, Time.deltaTime * 10);
+
+    }
+
+    public virtual void setPosition(Vector3 position, bool snapToTile = false)
+    {
+        desiredPosition = position;
+        if (snapToTile)
+        {
+            transform.position = desiredPosition;
+        }
+    }
+    public virtual void setScale(Vector3 scale, bool snapToTile = false)
+    {
+        desiredScale = scale;
+        if (snapToTile)
+        {
+            transform.localScale = desiredScale;
+        }
+    }
 }
