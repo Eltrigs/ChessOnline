@@ -12,7 +12,7 @@ public class Chessboard : MonoBehaviour
     [SerializeField] private float deathSize = 0.3f;
     [SerializeField] private float deathSpacing = 0.3f;
     [SerializeField] private float dragOffset = 0.3f;
-
+    [SerializeField] private GameObject victoryScreen;
 
     [Header("Prefabs & Materials")]
     [SerializeField] private GameObject[] prefabs;
@@ -30,10 +30,12 @@ public class Chessboard : MonoBehaviour
     private Camera currentCamera;
     private Vector2Int currentHover;
     private Vector3 bounds;
+    private bool isWhiteTurn;
 
     // Start is called before the first frame update
     void Start()
     {
+        isWhiteTurn = true;
         tileSize = 0.721f;
         yOffset = 0.01f;
         generateAllTiles(tileSize, TILE_COUNT_X, TILE_COUNT_Y);
@@ -92,7 +94,8 @@ public class Chessboard : MonoBehaviour
                 if (chessPieces[hitPosition.x, hitPosition.y] != null)
                 {
                     // Is it our turn?
-                    if (true)
+                    if ((chessPieces[hitPosition.x, hitPosition.y].team == 0 && isWhiteTurn) 
+                        || chessPieces[hitPosition.x, hitPosition.y].team == 1 && !isWhiteTurn)
                     {
                         currentlyDragging = chessPieces[hitPosition.x, hitPosition.y];
 
@@ -215,7 +218,7 @@ public class Chessboard : MonoBehaviour
         chessPieces[7, 0] = spawnSinglePiece(ChessPieceType.Rook, whiteTeam);
         for (int i = 0; i < TILE_COUNT_X; i++)
         {
-            //chessPieces[i, 1] = spawnSinglePiece(ChessPieceType.Pawn, whiteTeam);
+            chessPieces[i, 1] = spawnSinglePiece(ChessPieceType.Pawn, whiteTeam);
         }
 
         //White team
@@ -229,7 +232,7 @@ public class Chessboard : MonoBehaviour
         chessPieces[7, 7] = spawnSinglePiece(ChessPieceType.Rook, blackTeam);
         for (int i = 0; i < TILE_COUNT_X; i++)
         {
-            //chessPieces[i, 6] = spawnSinglePiece(ChessPieceType.Pawn, blackTeam);
+            chessPieces[i, 6] = spawnSinglePiece(ChessPieceType.Pawn, blackTeam);
         }
     }
     private ChessPiece spawnSinglePiece(ChessPieceType type, int team)
@@ -286,6 +289,70 @@ public class Chessboard : MonoBehaviour
         availableMoves.Clear();
     }
 
+    //Checkmate
+    private void checkMate(int team)
+    {
+        displayVictory(team);
+    }
+    private void displayVictory(int team)
+    {
+        victoryScreen.SetActive(true);
+        victoryScreen.transform.GetChild(team).gameObject.SetActive(true);
+
+    }
+    public void onResetButton()
+    {
+        //Take care of the UI
+        victoryScreen.transform.GetChild(0).gameObject.SetActive(false);
+        victoryScreen.transform.GetChild(1).gameObject.SetActive(false);
+        victoryScreen.SetActive(false);
+
+
+        //Fields reset
+        currentlyDragging = null;
+        availableMoves.Clear();
+
+        //Clean up chesspiece array
+        for (int x = 0; x < TILE_COUNT_X; x++)
+        {
+            for (int y = 0; y < TILE_COUNT_Y; y++)
+            {
+                if (chessPieces[x,y] != null)
+                {
+                    Destroy(chessPieces[x, y].gameObject);
+                }
+                chessPieces[x, y] = null;
+            }
+        }
+
+        //Get rid of pieces on the sied
+        for (int i = 0; i < deadWhites.Count; i++)
+        {
+            Destroy(deadWhites[i].gameObject);
+
+        }
+        for (int i = 0; i < deadBlacks.Count; i++)
+        {
+            Destroy(deadBlacks[i].gameObject);
+
+        }
+
+        deadWhites.Clear();
+        deadBlacks.Clear();
+
+        spawnAllPieces();
+        positionAllPieces();
+        isWhiteTurn = true;
+    }
+    public void onExitButton()
+    {
+        Application.Quit();
+    }
+
+
+
+
+
     //Operations
     private Vector2Int LookupTileIndex(GameObject hitInfo)
     {
@@ -319,6 +386,10 @@ public class Chessboard : MonoBehaviour
             //If its the enemy team's tile
             if (otherPiece.team == 0)
             {
+                if (otherPiece.type == ChessPieceType.King)
+                {
+                    checkMate(1);
+                }
                 deadWhites.Add(otherPiece);
                 otherPiece.setScale(Vector3.one * deathSize);
                 otherPiece.setPosition(
@@ -328,6 +399,10 @@ public class Chessboard : MonoBehaviour
             }
             else
             {
+                if (otherPiece.type == ChessPieceType.King)
+                {
+                    checkMate(0);
+                }
                 deadBlacks.Add(otherPiece);
                 otherPiece.setScale(Vector3.one * deathSize);
                 otherPiece.setPosition(
@@ -341,7 +416,7 @@ public class Chessboard : MonoBehaviour
         chessPieces[previousPosition.x, previousPosition.y] = null;
 
         positionSinglePiece(x, y);
-
+        isWhiteTurn = !isWhiteTurn;
         return true;
     }
 

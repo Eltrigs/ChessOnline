@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public enum ChessPieceType
 {
     None = 0,
@@ -13,8 +14,15 @@ public enum ChessPieceType
     King = 6,
 }
 
+
 public class ChessPiece : MonoBehaviour
 {
+    private void Start()
+    {
+        transform.rotation = Quaternion.Euler((team == 0) ? new Vector3(-90,0,0) : new Vector3(-90, 180, 0));
+    }
+
+
     public int team;
     public int currentX;
     public int currentY;
