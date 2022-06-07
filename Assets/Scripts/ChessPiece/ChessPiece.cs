@@ -47,4 +47,18 @@ public class ChessPiece : MonoBehaviour
             transform.localScale = desiredScale;
         }
     }
+
+
+    //ref makes it so that we don't duplicate the entire board for this function
+    public virtual List<Vector2Int> getAvailableMoves(ref ChessPiece[,] board, int tileCountX, int tileCountY)
+    {
+        List<Vector2Int> result = new List<Vector2Int>();
+
+        result.Add(new Vector2Int(3, 3));
+        result.Add(new Vector2Int(3, 4));
+        result.Add(new Vector2Int(4, 3));
+        result.Add(new Vector2Int(4, 4));
+
+        return result;
+    }
 }
