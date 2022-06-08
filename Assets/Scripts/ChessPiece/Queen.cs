@@ -76,17 +76,17 @@ public class Queen : ChessPiece
             }
         }
         //Downwards to left
-        for (int i = (currentX < currentY ? currentX - 1 : currentY - 1); i >= 0; i--)
+        for (int x = currentX - 1, y = currentY - 1; x >= 0 && y >= 0; x--, y--)
         {
-            if (board[currentX - i, currentY - i] == null)
+            if (board[x, y] == null)
             {
-                result.Add(new Vector2Int(currentX - i, currentY - i));
+                result.Add(new Vector2Int(x, y));
             }
-            if (board[currentX - i, currentY - i] != null)
+            else
             {
-                if (board[currentX - i, currentY - i].team != team)
+                if (board[x, y].team != team)
                 {
-                    result.Add(new Vector2Int(currentX - i, currentY - i));
+                    result.Add(new Vector2Int(x, y));
                 }
                 break;
             }
