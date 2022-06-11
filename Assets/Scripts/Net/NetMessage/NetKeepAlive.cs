@@ -11,7 +11,6 @@ public class NetKeepAlive : NetMessage
         Code = OpCode.KEEP_ALIVE;
         deSerialize(reader);
     }
-    public OpCode Code { set; get; }
 
     public override void serialize(ref DataStreamWriter writer)
     {

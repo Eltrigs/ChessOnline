@@ -7,19 +7,21 @@ public static class NetUtility
     public static void onData(DataStreamReader stream, NetworkConnection cnn, Server server = null)
     {
         NetMessage msg = null;
+        //Pop the first byte off the connection stream to check for OpCode
         var opCode = (OpCode)stream.ReadByte();
+        //Now deal with the message according to the recieved OpCode
         switch (opCode)
         {
             case OpCode.KEEP_ALIVE:
                 msg = new NetKeepAlive(stream); break;
-       /*     case OpCode.WELCOME:
+            case OpCode.WELCOME:
                 msg = new NetWelcome(stream); break;
             case OpCode.START_GAME:
                 msg = new NetStartGame(stream); break;
             case OpCode.MAKE_MOVE:
                 msg = new NetMakeMove(stream); break;
             case OpCode.REMATCH:
-                msg = new NetRematch(stream); break;*/
+                msg = new NetRematch(stream); break;
             default:
                 Debug.LogError("Message recieved had no OpCode");
                 break;
