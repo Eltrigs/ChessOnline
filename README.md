@@ -1,6 +1,6 @@
 # Unity-Chess
 
-Code copied from this playlist:
+Code copied about 99% from this playlist:
 https://www.youtube.com/playlist?list=PLmcbjnHce7SeAUFouc3X9zqXxiPbCz8Zp
 
 Chess set asset is from the unity asset store here:
